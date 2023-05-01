@@ -15,6 +15,7 @@ let lastAttackTime = 0;
 let playerLives = 3;
 let secondCooldown = 1000
 let radiusAttack = 50
+let lastLifeLostTime = 0;
 
 // Функция отрисовки счета
 function drawScore() {
@@ -41,11 +42,24 @@ document.addEventListener("keyup", (e) => {
 
 // Функция отрисовки персонажа
 function drawPlayer() {
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-  ctx.fillStyle = player.color;
-  ctx.fill();
-  ctx.closePath();
+  const currentTime = Date.now();
+
+  // Проверяем, прошло ли 3 секунды с последней потери жизни
+  if (currentTime - lastLifeLostTime < 3000) {
+    // Если прошло меньше 3 секунд, моргаем
+    if (Math.floor(currentTime / 200) % 2 === 0) {
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fillStyle = player.color;
+      ctx.fill();
+    }
+  } else {
+    // Если прошло больше 3 секунд, отрисовываем игрока как обычно
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+    ctx.fillStyle = player.color;
+    ctx.fill();
+  }
 }
 
 // Обновление положения персонажа
@@ -155,11 +169,17 @@ function checkCollision(player, enemy) {
 
 // Функция для обработки столкновений
 function handleCollisions() {
+  const currentTime = Date.now();
+
   enemies.forEach((enemy) => {
     if (checkCollision(player, enemy)) {
-      console.log("Столкновение! Теряем жизнь.");
-      playerLives--; // Уменьшаем количество жизней
-      enemies = enemies.filter((e) => e !== enemy); // Удаляем врага из массива
+      // Проверяем, прошло ли 3 секунды с последней потери жизни
+      if (currentTime - lastLifeLostTime >= 3000) {
+        console.log("Столкновение! Теряем жизнь.");
+        playerLives--; // Уменьшаем количество жизней
+        lastLifeLostTime = currentTime; // Обновляем время последней потери жизни
+      }
+      // Враги теперь не уничтожаются при столкновении
     }
   });
 }
